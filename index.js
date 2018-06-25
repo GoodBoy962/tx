@@ -4,7 +4,6 @@
 const program = require('commander');
 const path = require('path');
 const utils = require('./utils');
-const Account = require('./account').Account;
 
 const DEFAULT_DATA_DIR = path.resolve(utils.getUserHome(), '.tx');
 
