@@ -35,23 +35,30 @@ const getUserHome =
 
 /**
  * Prelog tx
+ * @param node
+ * @returns time {number}
  */
 const logTxPre
   = (node) => {
   console.log('########################################################################################################################################################################################');
-  // console.log(`Time: ${new Date().getTime()}`);
-  console.log(`Sending tx ... througn ${node}`);
+  const time = Math.ceil(new Date().getTime() / 1000);
+  console.log(`Time: ${time}`);
+  console.log(`Sending tx ... through ${node}`);
+  return time;
 };
 
 /**
  * Postlog tx
  * @param tx
+ * @param initTime
  */
 const logTxPost =
-  (tx) => {
-    console.log('Block number: ', tx.blockNumber);
-    console.log('Tx hash: ', tx.transactionHash);
-    console.log('########################################################################################################################################################################################');
+  (tx, initTime) => {
+    web3.eth.getBlock(tx.blockNumber).then(block => {
+      console.log('tx: ', tx);
+      console.log('Time for the confirmation: ', block.timestamp - initTime);
+      console.log('########################################################################################################################################################################################');
+    });
   };
 
 /**
