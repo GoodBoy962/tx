@@ -42,7 +42,6 @@ const logTxPre
   = (node) => {
   console.log('########################################################################################################################################################################################');
   const time = Math.ceil(new Date().getTime() / 1000);
-  console.log(`Time: ${time}`);
   console.log(`Sending tx ... through ${node}`);
   return time;
 };
