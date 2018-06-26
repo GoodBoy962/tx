@@ -14,9 +14,10 @@ const getGasPrice =
     try {
       await osmosis
         .get('https://ethgasstation.info/')
-        .set({'related': ['body > div > div > div.right_col > div.row.tile_count > div:nth-child(2) > div']})
+        .set({'related': ['body > div > div > div.right_col > div:nth-child(3) > div:nth-child(3) > div > div.x_content > table > tbody > tr:nth-child(3) > td:nth-child(2)']})
         .data(data => price = data.related[0] * 10 ** 9 /*gwei*/);
     } catch (err) {
+      console.error('Can\'t estimate gas price');
     }
     return price;
   };
@@ -52,12 +53,14 @@ const logTxPre
  * @param initTime
  */
 const logTxPost =
-  (tx, initTime) => {
-    web3.eth.getBlock(tx.blockNumber).then(block => {
-      console.log('tx: ', tx);
-      console.log('Time for the confirmation: ', block.timestamp - initTime);
+  async (tx, initTime) => {
+    console.log('tx: ', tx);
+    let block;
+    setTimeout(async () => {
+      block = await web3.eth.getBlock(tx.blockNumber);
+      console.log(`Time for the ${tx.transactionHash} confirmation: ${block.timestamp - initTime}`);
       console.log('########################################################################################################################################################################################');
-    });
+    }, 10000);
   };
 
 /**
