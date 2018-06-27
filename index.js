@@ -29,8 +29,9 @@ const send =
       value: '0x' + value
     }, from);
 
-    const initTime = utils.logTxPre(node);
+    const initTime = new Date().getTime();
     web3.eth.sendSignedTransaction(tx)
+      .on('transactionHash', hash => utils.logTxPre(node, hash, initTime))
       .on('receipt', tx => utils.logTxPost(tx, initTime));
   };
 

@@ -13,4 +13,4 @@
 - npm i -g
 
 ### Misc
-Данные по газу берутся с **ethgasstation.info** поле Gas Price Std (Gwei)
+Данные по газу берутся с **ethgasstation.info** поле Max Gas Price (Gwei)
