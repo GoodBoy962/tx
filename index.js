@@ -98,6 +98,7 @@ const sendTx2 = (tx, node, index, initTime) => {
  * @param gasPrice
  */
 const sendToMultNodes = (gasLimit, gasPrice, from, to, value, nodes) => {
+
   nodes = nodes.map(node => new Web3(node));
   const address = '0x1fed25aa5311d770f29e22870cdb9e715052fea7';
 
@@ -108,8 +109,8 @@ const sendToMultNodes = (gasLimit, gasPrice, from, to, value, nodes) => {
       from: fromAddress,
       to: address,
       nonce,
-      gasPrice,
-      gasLimit,
+      gasPrice: Number(gasPrice),
+      gasLimit: Number(gasLimit),
       value: '0x' + value
     }, from);
 
