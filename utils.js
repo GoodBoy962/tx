@@ -1,6 +1,7 @@
 const osmosis = require('osmosis');
 const Web3 = require('web3');
 const Tx = require('ethereumjs-tx');
+const dateFormat = require('dateformat');
 
 const web3 = new Web3('https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst');
 
@@ -40,26 +41,21 @@ const getUserHome = () =>
  * @returns time {number}
  */
 const logTxPre = (node, hash, initTime) => {
-  console.log('########################################################################################################################################################################################');
   const time = new Date(new Date().getTime() - initTime);
-  console.log(`Sending tx ${hash} through ${node}`);
-  console.log(`Tx ${hash} on a node in ${time.getMinutes()} minutes ${time.getSeconds()} seconds`);
-  return time;
+  console.log(node, `Tx ${hash} on a node in ${dateFormat(time, "MM:ss:l")}`);
 };
 
 /**
  * Postlog tx
+ * @param node
  * @param tx
  * @param initTime
  */
-const logTxPost = async (tx, initTime) => {
-  console.log(`Tx: ${tx.transactionHash} , block: ${tx.blockNumber}`);
-  setTimeout(async () => {
-    const block = await web3.eth.getBlock(tx.blockNumber);
-    const time = new Date(block.timestamp * 1000 - initTime);
-    console.log(`Time for the ${tx.transactionHash} confirmation: ${time.getMinutes()} minutes ${time.getSeconds()} seconds`);
-    console.log('########################################################################################################################################################################################');
-  }, 10000);
+const logTxPost = (node, tx, initTime) => {
+  const pTime = new Date().getTime();
+  console.log(node, `Tx: ${tx.transactionHash} , block: ${tx.blockNumber}`);
+  const time = new Date(pTime - initTime);
+  console.log(node, `Time for the ${tx.transactionHash} confirmation: ${dateFormat(time, "MM:ss:l")} seconds`);
 };
 
 /**
@@ -67,11 +63,10 @@ const logTxPost = async (tx, initTime) => {
  * @param address
  * @returns {Promise<string>}
  */
-const getNonce =
-  async address => {
-    const nonce = await web3.eth.getTransactionCount(address);
-    return web3.utils.toHex(nonce);
-  };
+const getNonce = async address => {
+  const nonce = await web3.eth.getTransactionCount(address);
+  return web3.utils.toHex(nonce);
+};
 
 /**
  * Sign tx and serialize result
