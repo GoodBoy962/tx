@@ -5,6 +5,7 @@ const program = require('commander');
 const path = require('path');
 const utils = require('./utils');
 const Web3 = require('web3');
+const dateFormat = require('dateformat');
 
 const DEFAULT_DATA_DIR = path.resolve(utils.getUserHome(), '.tx');
 
