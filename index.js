@@ -52,7 +52,7 @@ const send = (gasLimit, gasPrice, from, to, value, node) => {
       from: fromAddress,
       to,
       nonce,
-      gasPrice: Number(gasPrice),
+      gasPrice: Number(gasPrice) * 10 ** 9,
       gasLimit: Number(gasLimit),
       value: '0x' + value
     }, from);
@@ -86,7 +86,7 @@ const sendFromMul = async (gasLimit, gasPrice, to, value, node, froms) => {
       from: fromAddress,
       to,
       nonce,
-      gasPrice: Number(gasPrice),
+      gasPrice: Number(gasPrice) * 10 ** 9,
       gasLimit: Number(gasLimit),
       value: '0x' + value
     }, froms[index]);
@@ -118,7 +118,7 @@ const sendToMultNodes = (gasLimit, gasPrice, from, to, value, nodes) => {
       from: fromAddress,
       to,
       nonce,
-      gasPrice: Number(gasPrice),
+      gasPrice: Number(gasPrice) * 10 ** 9,
       gasLimit: Number(gasLimit),
       value: '0x' + value
     }, from);
