@@ -11,69 +11,14 @@ const DEFAULT_DATA_DIR = path.resolve(utils.getUserHome(), '.tx');
 
 /**
  *
- * @param gasLimit
- * @param gasPrice
- * @param from
- * @param to
- * @param value
+ *
+ * @param tx
  * @param node
- * @param nonce
- * @returns {Promise<void>}
+ * @param index
+ * @param initTime
+ * @returns {Promise<any>}
  */
-const sendTx =
-  async (gasLimit, gasPrice, from, to, value, node, nonce) => {
-    const web3 = utils.getWeb3Node(node);
-    const wallet = web3.eth.accounts.privateKeyToAccount('0x' + from);
-    const tx = utils.signTx({
-      from: wallet.address,
-      to,
-      nonce,
-      gasPrice: gasPrice * 10 ** 9,
-      gasLimit: Number(gasLimit),
-      value: '0x' + value
-    }, from);
-
-    console.log(nonce);
-    const initTime = new Date().getTime();
-    web3.eth.sendSignedTransaction(tx)
-      .on('transactionHash', hash => utils.logTxPre(node, hash, initTime))
-      .on('receipt', tx => utils.logTxPost(tx, initTime, node))
-      .on('error', err => console.error(err));
-  };
-
-/**
- * Send tx
- * @param gasLimit
- * @param gasPrice
- * @param from, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
- * @param to, example: 0x1fed25aa5311d770f29e22870cdb9e715052fea7
- * @param value, example: 1000000000000000
- * @param node, example: https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst
- */
-const send =
-  async (gasLimit, gasPrice, from, to, value, node) => {
-    const web3 = utils.getWeb3Node(node);
-    const wallet = web3.eth.accounts.privateKeyToAccount('0x' + from);
-    const nonce = await utils.getNonce(wallet.address, node);
-    console.log(from, node);
-    await sendTx(gasLimit, gasPrice, from, to, value, node, nonce);
-  };
-
-/**
- * Send from multiple accounts
- * @param froms, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
- * @param to, example: 0x1fed25aa5311d770f29e22870cdb9e715052fea7
- * @param value, example: 1000000000000000
- * @param node, example: https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst
- * @param gasLimit
- * @param gasPrice
- */
-const sendFromMul = (gasLimit, gasPrice, to, value, node, froms) => {
-  const promiseGen = (() => froms.map(from => send(gasLimit, gasPrice, from, to, value, node)));
-  Promise.all(promiseGen()).catch(console.log);
-};
-
-const sendTx2 = (tx, node, index, initTime) => {
+const sendTx = (tx, node, index, initTime) => {
   return new Promise((resolve, reject) => {
     node.eth.sendSignedTransaction(tx)
       .on('transactionHash', hash => utils.logTxPre(index, hash, initTime))
@@ -89,6 +34,71 @@ const sendTx2 = (tx, node, index, initTime) => {
 };
 
 /**
+ * Send tx
+ * @param gasLimit
+ * @param gasPrice
+ * @param from, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
+ * @param to, example: 0x1fed25aa5311d770f29e22870cdb9e715052fea7
+ * @param value, example: 1000000000000000
+ * @param node, example: https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst
+ */
+const send = (gasLimit, gasPrice, from, to, value, node) => {
+  node = new Web3(node);
+
+  const fromAddress = node.eth.accounts.privateKeyToAccount('0x' + from).address;
+  node.eth.getTransactionCount(fromAddress).then(nonce => {
+
+    const tx = utils.signTx({
+      from: fromAddress,
+      to,
+      nonce,
+      gasPrice: Number(gasPrice),
+      gasLimit: Number(gasLimit),
+      value: '0x' + value
+    }, from);
+
+    const initTime = new Date().getTime();
+    console.log('Time:', dateFormat(new Date(initTime), "UTC:mmm-dd-yyyy hh:MM:ss TT Z"));
+    sendTx(tx, node, 1, initTime).then();
+  });
+};
+
+/**
+ * Send from multiple accounts
+ * @param froms, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
+ * @param to, example: 0x1fed25aa5311d770f29e22870cdb9e715052fea7
+ * @param value, example: 1000000000000000
+ * @param node, example: https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst
+ * @param gasLimit
+ * @param gasPrice
+ */
+const sendFromMul = async (gasLimit, gasPrice, to, value, node, froms) => {
+  node = new Web3(node);
+
+  const nonces = await Promise.all(froms.map(from => {
+    const fromAddress = node.eth.accounts.privateKeyToAccount('0x' + from).address;
+    return node.eth.getTransactionCount(fromAddress)
+  }));
+
+  const txes = nonces.map((nonce, index) => {
+    const fromAddress = node.eth.accounts.privateKeyToAccount('0x' + froms[index]).address;
+    return utils.signTx({
+      from: fromAddress,
+      to,
+      nonce,
+      gasPrice: Number(gasPrice),
+      gasLimit: Number(gasLimit),
+      value: '0x' + value
+    }, froms[index]);
+  });
+
+  const initTime = new Date().getTime();
+  console.log('Time:', dateFormat(new Date(initTime), "UTC:mmm-dd-yyyy hh:MM:ss TT Z"));
+  Promise.all(txes.map((tx) => sendTx(tx, node, 1, initTime))).then();
+
+};
+
+/**
  * Send from one account to different nodes
  * @param from, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
  * @param to, example: 0x1fed25aa5311d770f29e22870cdb9e715052fea7
@@ -100,14 +110,13 @@ const sendTx2 = (tx, node, index, initTime) => {
 const sendToMultNodes = (gasLimit, gasPrice, from, to, value, nodes) => {
 
   nodes = nodes.map(node => new Web3(node));
-  const address = '0x1fed25aa5311d770f29e22870cdb9e715052fea7';
 
   const fromAddress = nodes[0].eth.accounts.privateKeyToAccount('0x' + from).address;
-  nodes[0].eth.getTransactionCount(address).then(nonce => {
+  nodes[0].eth.getTransactionCount(fromAddress).then(nonce => {
 
     const tx = utils.signTx({
       from: fromAddress,
-      to: address,
+      to,
       nonce,
       gasPrice: Number(gasPrice),
       gasLimit: Number(gasLimit),
@@ -116,7 +125,7 @@ const sendToMultNodes = (gasLimit, gasPrice, from, to, value, nodes) => {
 
     const initTime = new Date().getTime();
     console.log('Time:', dateFormat(new Date(initTime), "UTC:mmm-dd-yyyy hh:MM:ss TT Z"));
-    Promise.all(nodes.map((node, index) => sendTx2(tx, node, index + 1, initTime))).then();
+    Promise.all(nodes.map((node, index) => sendTx(tx, node, index + 1, initTime))).then();
 
   });
 };
