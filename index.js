@@ -134,6 +134,83 @@ const sendToMultNodes =
     });
   };
 
+const sendToMultNodesPlus =
+  async (gasLimit1, gasPrice1, from1, to1, value1, node1, gasLimit, gasPrice, from, to, value, nodes) => {
+
+    nodes = nodes.map(node => new Web3(node));
+
+    const fromAddress = nodes[0].eth.accounts.privateKeyToAccount('0x' + from).address;
+    const nonce = await nodes[0].eth.getTransactionCount(fromAddress);
+
+    const tx = utils.signTx({
+      from: fromAddress,
+      to,
+      nonce,
+      gasPrice: Number(gasPrice) * 10 ** 9,
+      gasLimit: Number(gasLimit),
+      value: '0x' + value
+    }, from);
+
+    node1 = new Web3(node1);
+
+    const fromAddress1 = node1.eth.accounts.privateKeyToAccount('0x' + from1).address;
+    const nonce1 = await node1.eth.getTransactionCount(fromAddress1);
+
+    const tx1 = utils.signTx({
+      from: fromAddress1,
+      to: to1,
+      nonce: nonce1,
+      gasPrice: Number(gasPrice1) * 10 ** 9,
+      gasLimit: Number(gasLimit1),
+      value: '0x' + value1
+    }, from1);
+
+    const initTime = new Date().getTime();
+    console.log('Time:', dateFormat(new Date(initTime), 'UTC:mmm-dd-yyyy hh:MM:ss TT Z'));
+    const promises = nodes.map((node, index) => sendTx(tx, node, index + 1, initTime));
+    promises.push(sendTx(tx1, node1, 'XXX', initTime));
+    Promise.all(promises).then();
+
+  };
+
+/**
+ *
+ * @param gasLimit
+ * @param gasPrice
+ * @param to
+ * @param value
+ * @param from_nodes
+ * @returns {Promise<void>}
+ */
+const sendFromMultToMultNodesDiff =
+  (gasLimit, gasPrice, to, value, from_nodes) => {
+
+    const initTime = new Date().getTime();
+    console.log('Time:', dateFormat(new Date(initTime), 'UTC:mmm-dd-yyyy hh:MM:ss TT Z'));
+
+    from_nodes.map((from_node, index) => {
+
+      const node = new Web3(from_node.split('_')[1]);
+      const from = from_node.split('_')[0];
+
+      const fromAddress = node.eth.accounts.privateKeyToAccount('0x' + from).address;
+      node.eth.getTransactionCount(fromAddress).then(nonce => {
+
+        const tx = utils.signTx({
+          from: fromAddress,
+          to,
+          nonce,
+          gasPrice: Number(gasPrice) * 10 ** 9,
+          gasLimit: Number(gasLimit),
+          value: '0x' + value
+        }, from);
+
+        Promise.resolve(sendTx(tx, node, index + 1, initTime)).then();
+      });
+
+    });
+  };
+
 /**
  * Send from one account to different nodes
  * @param from, example: CEF770534115708294CD46AC0676853561870FF80E58986663FFD677DF312092
@@ -168,49 +245,49 @@ const sendToMultNodesDiff =
 
   };
 
-/**
- *
- * @param gasLimit
- * @param gasPrice
- * @param to
- * @param value
- * @param from_nodes
- * @returns {Promise<void>}
- */
-const sendFromMultToMultNodesDiff = (gasLimit, gasPrice, to, value, from_nodes) => {
+const sendToMultNodesDiffPlus =
+  async (gasLimit1, gasPrice1, from1, to1, value1, node1, gasLimit, gasPrice, from, to, value, nodes) => {
 
-  const initTime = new Date().getTime();
-  console.log('Time:', dateFormat(new Date(initTime), 'UTC:mmm-dd-yyyy hh:MM:ss TT Z'));
-
-  from_nodes.map((from_node, index) => {
-
-    const node = new Web3(from_node.split('_')[1]);
-    const from = from_node.split('_')[0];
+    const node = new Web3(nodes[0]);
 
     const fromAddress = node.eth.accounts.privateKeyToAccount('0x' + from).address;
-    node.eth.getTransactionCount(fromAddress).then(nonce => {
+    const nonce = await node.eth.getTransactionCount(fromAddress);
 
-      const tx = utils.signTx({
+    const txes = nodes.map((_, index) => {
+      return utils.signTx({
         from: fromAddress,
         to,
         nonce,
         gasPrice: Number(gasPrice) * 10 ** 9,
         gasLimit: Number(gasLimit),
-        value: '0x' + value
+        value: '0x' + (value - index)
       }, from);
-
-      Promise.resolve(sendTx(tx, node, index + 1, initTime)).then();
     });
 
-  });
-};
+    node1 = new Web3(node1);
+
+    const fromAddress1 = node1.eth.accounts.privateKeyToAccount('0x' + from1).address;
+    const nonce1 = await node1.eth.getTransactionCount(fromAddress1);
+
+    const tx1 = utils.signTx({
+      from: fromAddress1,
+      to: to1,
+      nonce: nonce1,
+      gasPrice: Number(gasPrice1) * 10 ** 9,
+      gasLimit: Number(gasLimit1),
+      value: '0x' + value1
+    }, from1);
+
+    const initTime = new Date().getTime();
+    console.log('Time:', dateFormat(new Date(initTime), 'UTC:mmm-dd-yyyy hh:MM:ss TT Z'));
+    const promises = txes.map((tx, index) => sendTx(tx, node, index + 1, initTime));
+    promises.push(sendTx(tx1, node1, 'XXX', initTime));
+    Promise.all(promises).then();
+
+  };
 
 program
-  .version('0.0.1')
-  .usage('[options] <file ...>');
-
-program
-  .version('0.0.1')
+  .version('1.0.1')
   .usage('[options] <file ...>');
 
 program
@@ -229,9 +306,19 @@ program
   .action(sendToMultNodes);
 
 program
+  .command('sendToMulNodesPlus <gasLimit1> <gasPrice1> <from1> <to1> <value1> <node1> <gasLimit> <gasPrice> <from> <to> <value> [nodes...] ')
+  .description('Send <value1> ETH to <to1> from private key <from1> through the node <node1> || Send <value> ETH to <to> from <from> through the node [nodes]')
+  .action(sendToMultNodesPlus);
+
+program
   .command('sendToMulNodesDiff <gasLimit> <gasPrice> <from> <to> <value> [nodes...] ')
   .description('Send <value> ETH to <to> from <from> through the node [nodes]')
   .action(sendToMultNodesDiff);
+
+program
+  .command('sendToMulNodesDiffPlus <gasLimit1> <gasPrice1> <from1> <to1> <value1> <node1> <gasLimit> <gasPrice> <from> <to> <value> [nodes...] ')
+  .description('Send <value1> ETH to <to1> from private key <from1> through the node <node1> || Send <value> ETH to <to> from <from> through the node [nodes]')
+  .action(sendToMultNodesDiffPlus);
 
 program
   .command('sendFromMultToMultNodesDiff <gasLimit> <gasPrice> <to> <value> [from_nodes...] ')

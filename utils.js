@@ -81,14 +81,11 @@ const signTx = (tx, privateKey) => {
   return '0x' + signedTx.serialize().toString('hex');
 };
 
-const getWeb3Node = provider => new Web3(provider);
-
 module.exports = {
   signTx,
   getGasPrice,
   getUserHome,
   getNonce,
-  getWeb3Node,
   logTxPost,
   logTxPre
 };
