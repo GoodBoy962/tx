@@ -8,6 +8,8 @@
 `tx sendToMulNodes 100000 1 48559010F59635241BBC8130BC8CF2D58D011987327D0669F76E0E0E8F58DDA4 0x1fed25aa5311d770f29e22870cdb9e715052fea7 1 https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst https://api.myetherapi.com/rop`
 4) Много адресов оптравляет отправляет транзы через разные ноды.  
 `tx sendFromMultToMultNodesDiff 21000 10 0x1fed25aa5311d770f29e22870cdb9e715052fea7 1 48559010F59635241BBC8130BC8CF2D58D011987327D0669F76E0E0E8F58DDA4_https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst 7D0AA063D29AB020B7D35B4B784BA2290D8D69E6107B22006AE54E6A225F3947_https://api.myetherapi.com/rop`
+5) Один адрес оптравляет отправляет транзы c разным value через разные ноды.  
+`tx sendToMulNodesDiff 100000 10 48559010F59635241BBC8130BC8CF2D58D011987327D0669F76E0E0E8F58DDA4 0x1fed25aa5311d770f29e22870cdb9e715052fea7 1 https://ropsten.infura.io/oI5puXL7bMnaY7Dv9AzFconst https://api.myetherapi.com/rop`
 
 ### Installation
 - npm i
